@@ -1,0 +1,353 @@
+﻿<div class="container">
+    <div class="row">
+        <div id="ordersBlock" class="col-sm-2"></div>
+    </div>
+    <div class="row" style="display: inline-block;">
+        <div id="orderItemsBlock" class="col-sm-2"></div>
+        <div id="createBlock" class="col-sm-2">
+            <div><p class='header'>Добавление позиции заказа</p></div>
+            <table class="table table-striped">
+                <tr><td><label>Название: </label></td><td><input type="text" id="addTitle" /></td></tr>
+                <tr><td><label>Количество: </label></td><td><input type="number" id="addCount" /></td></tr>
+                <tr><td><label>Цена: </label></td><td><input type="number" id="addPrice" /></td></tr>
+            </table>
+            <button type="button" class="btn btn-primary" id="addOrderItem">Сохранить</button>
+        </div>
+        <div id="editBlock" class="col-sm-2">
+            <div><p class='header'>Редактирование позиции заказа</p></div>
+            <table class="table table-striped">
+                <tr style="display:none"><td><input type="hidden" id="editId" /></td><td></td></tr>
+                <tr><td><label>Название: </label></td><td><input type="text" id="editTitle" /></td></tr>
+                <tr><td><label>Количество: </label></td><td><input type="number" id="editCount" /></td></tr>
+                <tr><td><label>Цена: </label></td><td><input type="number" id="editPrice" /></td></tr>
+            </table>
+            <button type="button" class="btn btn-primary" id="editOrderItem">Сохранить</button>
+        </div>
+        <div id="errors" style="color:red;"></div>
+    </div>
+</div>
+
+    
+@section scripts
+{
+    <script type="text/javascript">
+        var currentOrder;
+        $(document).ready(function () {
+
+            GetAllOrders();
+
+            $("#addOrderItem").click(function (event) {
+                event.preventDefault();
+                AddOrderItem();
+            });
+
+            $("#editOrderItem").click(function (event) {
+                event.preventDefault();
+                EditOrderItem();
+            });
+        });
+
+        // Получение всех заказов по ajax-запросу
+        function GetAllOrders() {
+            $("#createBlock").css('display', 'none');
+            $("#editBlock").css('display', 'none');
+            $.ajax({
+                url: '/api/values/',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    WriteOrders(data);
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        // Получение всех позиций заказа по ajax-запросу
+        function GetAllOrderItems(order) {
+            $.ajax({
+                url: '/api/values/getorderitems/' + order.Id,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    WriteOrderItems(data);
+                    GetOrder(order);
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        //получение обновленного заказа
+        function GetOrder(order) {
+            var id = order.Id;
+            $.ajax({
+                url: '/api/values/getorder/' + id,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    WriteOrderAmount(data);
+                    currentOrder = data;
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        // Добавление новой позиции в заказ
+        function AddOrderItem() {
+            // получаем значения для добавляемой позиции
+            var orderItem = {
+                Title: $('#addTitle').val(),
+                Count: $('#addCount').val(),
+                Price: $('#addPrice').val(),
+                OrderId: currentOrder.Id
+            };
+
+            $.ajax({
+                url: '/api/values/createorderitem/',
+                type: 'POST',
+                data: JSON.stringify(orderItem),
+                contentType: "application/json;charset=utf-8",
+                success: function (data) {
+                    GetAllOrderItems(currentOrder);
+                    GetAllOrders();
+                    GetOrder(currentOrder);
+                    Clear();
+                },
+                error: function (jxqr, error, status) {
+                    $('#errors').css('display', 'block');
+                    var response = jQuery.parseJSON(jxqr.responseText);
+                    $('#errors').empty();
+                    $('#errors').append("<h4>" + response['Message'] + "</h4>");
+                    // ошибки свойства Count
+                    if (response['ModelState']['orderItem.Count']) {
+
+                        $.each(response['ModelState']['orderItem.Count'], function (index, item) {
+                            $('#errors').append("<p>" + item + "</p>");
+                        });
+                    }
+                    // ошибки свойства Price
+                    if (response['ModelState']['orderItem.Price']) {
+                        $.each(response['ModelState']['orderItem.Price'], function (index, item) {
+                            $('#errors').append("<p>" + item + "</p>");
+                        });
+                    }
+                }
+            });
+        }
+
+        // редактирование позиции заказа
+        function EditOrderItem() {
+            var id = $('#editId').val()
+            // получаем новые значения для редактируемой позиции заказа
+            var orderItem = {
+                Id: $('#editId').val(),
+                Title: $('#editTitle').val(),
+                Count: $('#editCount').val(),
+                Price: $('#editPrice').val(),
+                OrderId: currentOrder.Id
+            };
+            $.ajax({
+                url: '/api/values/' + id,
+                type: 'PUT',
+                data: JSON.stringify(orderItem),
+                contentType: "application/json;charset=utf-8",
+                success: function (data) {
+                    GetAllOrderItems(currentOrder);
+                    GetAllOrders();
+                    GetOrder(currentOrder);
+                    Clear();
+                },
+                error: function (jxqr, error, status) {
+                    $('#errors').css('display', 'block');
+                    var response = jQuery.parseJSON(jxqr.responseText);
+                    $('#errors').empty();
+                    $('#errors').append("<h4>" + response['Message'] + "</h4>");
+                    // ошибки свойства Count
+                    if (response['ModelState']['orderItem.Count']) {
+
+                        $.each(response['ModelState']['orderItem.Count'], function (index, item) {
+                            $('#errors').append("<p>" + item + "</p>");
+                        });
+                    }
+                    // ошибки свойства Price
+                    if (response['ModelState']['orderItem.Price']) {
+                        $.each(response['ModelState']['orderItem.Price'], function (index, item) {
+                            $('#errors').append("<p>" + item + "</p>");
+                        });
+                    }
+                }
+            });
+        }
+
+        // Удаление позиции из заказа
+        function DeleteOrderItem(id) {
+            $.ajax({
+                url: '/api/values/deleteorderitem/' + id,
+                type: 'DELETE',
+                contentType: "application/json;charset=utf-8",
+                success: function (data) {
+                    GetAllOrderItems(currentOrder);
+                    GetAllOrders();
+                    GetOrder(currentOrder);
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        // вывод списка заказов на экран
+        function WriteOrders(orders) {
+            var strResult = "<div class='header-group'><div><button id = 'createOrder' class='btn btn-add' type='button' onclick = 'AddOrder();'><i class='glyphicon glyphicon-plus'></i></button></div>" +
+                "<div><p class='header'>Список заказов</p></div></div>" +
+                "<table class='table table-striped''><thead><th>ID</th><th>Общая сумма заказа</th></thead><tbody>";
+            $.each(orders, function (index, order) {
+                strResult += "<tr><td>" + order.Id + "</td><td>" + order.Amount +
+                    "</td><td style='border: 0;'><button id = 'editItem' class='btn btn-primary' type='button' data-item='" + order.Id + "' onclick = 'EditOrder(this);'><i class='glyphicon glyphicon-pencil'></i></button> " +
+                    "<button id = 'delItem' class='btn btn-delete' type='button' data-item='" + order.Id + "' onclick = 'DeleteOrder(this);'><i class='glyphicon glyphicon-trash'></i></button></td></tr>";
+            });
+            strResult += "</tbody></table>";
+            $("#ordersBlock").html(strResult);
+        }
+
+        // вывод списка позиций заказа на экран
+        function WriteOrderItems(orderItems) {
+            var strResult = "<div class='header-group'><div><button id = 'createItem' class='btn btn-add' type='button' onclick = 'AddItem(this);'><i class='glyphicon glyphicon-plus'></i></button></div>" +
+                "<div><p class='header'>Заказ №" + currentOrder.Id + "<p></div></div>" +
+                "<table class='table table-striped''><thead><th>ID</th><th>Название</th><th>Количество</th><th>Цена</th><th>Сумма</th></thead><tbody>";
+            $.each(orderItems, function (index, orderItem) {
+                strResult += "<tr><td>" + orderItem.Id + "</td><td> " + orderItem.Title + "</td><td>" +
+                    orderItem.Count + "</td><td>" + orderItem.Price + "</td><td>" + orderItem.Amount +
+                    "</td><td style='border: 0;'><button id = 'editItem' class='btn btn-primary' type='button' data-item='" + orderItem.Id + "' onclick = 'EditItem(this);'><i class='glyphicon glyphicon-pencil'></i></button> " +
+                    "<button id = 'delItem' class='btn btn-delete' type='button' data-item='" + orderItem.Id + "' onclick = 'DeleteItem(this);'><i class='glyphicon glyphicon-trash'></i></button></td></tr>";
+            });
+            strResult += "</tbody></table>" +
+                "<div id='orderAmount'></div>";
+            $("#orderItemsBlock").html(strResult);
+        }
+
+        //вывод обновленной общей суммы заказа
+        function WriteOrderAmount(order) {
+            var strResult = "<p><b>Общая сумма заказа: </b>" + order.Amount + "</p>";
+            $("#orderAmount").html(strResult);
+        }
+
+        //обработчик добавления позиции заказа
+        function AddItem() {
+            $("#editBlock").css('display', 'none');
+            $("#createBlock").css('display', 'block');
+        }
+
+        // обработчик редактирования позиции заказа
+        function EditItem(el) {
+            // получаем id редактируемой позиции заказа
+            var id = $(el).attr('data-item');
+            GetOrderItem(id);
+        }
+
+        // обработчик удаления позиции заказа
+        function DeleteItem(el) {
+            // получаем id удаляемой позиции заказа
+            var id = $(el).attr('data-item');
+            DeleteOrderItem(id);
+        }
+
+        //обработчик добавления нового заказа
+        function AddOrder() {
+            $.ajax({
+                url: '/api/values/createorder/',
+                type: 'POST',
+                contentType: "application/json;charset=utf-8",
+                success: function (data) {
+                    GetAllOrders();
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        //обработчик редактирования заказа
+        function EditOrder(el) {
+            // получаем id редактируемого заказа
+            var id = $(el).attr('data-item');
+            $("#orderItemsBlock").css('display', 'block');
+
+            $.ajax({
+                url: '/api/values/getorder/' + id,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    GetAllOrderItems(data);
+                    currentOrder = data;
+                    WriteOrderAmount(data);
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        // обработчик удаления заказа
+        function DeleteOrder(el) {
+            // получаем id удаляемого заказа
+            var id = $(el).attr('data-item');
+
+            $.ajax({
+                url: '/api/values/deleteorder/' + id,
+                type: 'DELETE',
+                contentType: "application/json;charset=utf-8",
+                success: function (data) {
+                    GetAllOrders();
+                    $("#orderItemsBlock").css('display', 'none');
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        // вывод данных редактируемой позиции заказа в поля для редактирования
+        function ShowOrderItem(orderItem) {
+            if (orderItem != null) {
+                $("#createBlock").css('display', 'none');
+                $("#editBlock").css('display', 'block');
+                $("#editId").val(orderItem.Id);
+                $("#editTitle").val(orderItem.Title);
+                $("#editCount").val(orderItem.Count);
+                $("#editPrice").val(orderItem.Price);
+            }
+            else {
+                alert("Такая позиция не существует в заказе");
+            }
+        }
+
+        // запрос позиции заказа на редактирование
+        function GetOrderItem(id) {
+            $.ajax({
+                url: '/api/values/getorderitem/' + id,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    ShowOrderItem(data);
+                },
+                error: function (x, y, z) {
+                    alert(x + '\n' + y + '\n' + z);
+                }
+            });
+        }
+
+        //очистка полей после добавления/редактирования
+        function Clear() {
+            $('#addTitle').val('');
+            $('#addCount').val('');
+            $('#addPrice').val('');
+            $('#errors').css('display', 'none');
+        }
+    </script>
+}

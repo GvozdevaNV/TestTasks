@@ -1,0 +1,92 @@
+﻿body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+/*div {
+    display: inline-block;
+}*/
+
+#ordersBlock {
+    width: 450px;
+}
+
+#orderItemsBlock {
+    width: 600px;
+}
+
+#editBlock {
+    display: none;
+    width: 450px;
+    float: left;
+}
+
+#createBlock {
+    display: none;
+    width: 450px;
+    float: left;
+}
+
+.btn-add {
+    color: #337ab7;
+    background-color: #fff;
+    border-color: #2e6da4;
+}
+
+.btn-add:focus,
+.btn-add.focus {
+    color: #fff;
+    background-color: #286090;
+    border-color: #122b40;
+}
+
+
+.btn-add:hover {
+    color: #fff;
+    background-color: #286090;
+    border-color: #204d74;
+}
+
+.btn-delete {
+    color: #fff;
+    background-color: #d9534f;
+    border-color: #d43f3a;
+}
+
+.btn-delete:focus,
+.btn-delete.focus {
+    color: #fff;
+    background-color: #d43f3a;
+    border-color: #761c19;
+}
+
+.btn-delete:hover {
+    color: #fff;
+    background-color: #d43f3a;
+    border-color: #ac2925;
+}
+
+.header-group div {
+    display: inline-block;
+    padding-right: 15px;
+}
+
+.header{
+    font-size:larger;
+    font-weight:600;
+}
+
+
+
+
