@@ -13,17 +13,6 @@ namespace Task1_Orders
     {
         static void Main(string[] args)
         {
-            //using (OrderContext db = new OrderContext())
-            //{
-            //    db.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction,
-            //      string.Format("ALTER DATABASE [{0}] SET READ_COMMITTED_SNAPSHOT ON ",
-            //      db.Database.Connection.Database));
-
-            //    db.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction,
-            //      string.Format("ALTER DATABASE [{0}] SET ALLOW_SNAPSHOT_ISOLATION ON",
-            //      db.Database.Connection.Database));
-            //}
-
             PrintOrderItemsByOrder();
 
             Task task1 = Task.Factory.StartNew(UpdateOrderPrimary);
